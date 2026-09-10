@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📖 Aljeanar FlipBook</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #edeae4;
+      --surface:   #ffffff;
+      --surface2:  #f5f3ef;
+      --border:    #dddad4;
+      --text:      #1a1917;
+      --muted:     #6b6865;
+      --accent:    #2563eb;
+      --accent-bg: #eff6ff;
+      --radius:    10px;
+      --shadow:    0 24px 64px rgba(0,0,0,.20), 0 4px 16px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ══════════════════════════════
+       UPLOAD SCREEN
+    ══════════════════════════════ */
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    .brand {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -.04em;
+      margin-bottom: .75rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      margin-bottom: .5rem;
+    }
+
+    .hero > p {
+      color: var(--muted);
+      font-size: .95rem;
+      max-width: 360px;
+      line-height: 1.65;
+      margin-bottom: 2rem;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      width: 100%;
+      max-width: 460px;
+      border: 2px dashed var(--border);
+      border-radius: 18px;
+      padding: 2.8rem 2rem;
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .drop-zone.over { border-color: var(--accent); background: var(--accent-bg); }
+
+    .drop-icon { font-size: 3rem; margin-bottom: .75rem; }
+    .drop-title { font-size: 1.05rem; font-weight: 600; margin-bottom: .25rem; }
+    .drop-sub   { font-size: .85rem; color: var(--muted); margin-bottom: 1rem; }
+
+    #file-input { display: none; }
+
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: .6rem 1.4rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+
+    /* Progress */
+    .progress-wrap { width: 100%; max-width: 460px; margin-top: 1.25rem; display: none; }
+    .progress-bar  { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: .5rem; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
+    .progress-txt  { font-size: .82rem; color: var(--muted); text-align: center; }
+
+    /* ══════════════════════════════
+       VIEWER SCREEN
+    ══════════════════════════════ */
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .55rem 1.25rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 1rem;
+    }
+
+    .tl { display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0; }
+    .tc { display: flex; align-items: center; gap: .4rem; }
+    .tr { display: flex; align-items: center; gap: .35rem; flex: 1; justify-content: flex-end; }
+
+    .brand-sm  { font-size: 1rem; font-weight: 800; letter-spacing: -.03em; white-space: nowrap; }
+    .fname     { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .pg-info   { font-size: .8rem; color: var(--muted); min-width: 116px; text-align: center; }
+
+    .tbtn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .3rem .7rem;
+      font-size: .88rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .tbtn:hover    { background: var(--surface2); }
+    .tbtn:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* Main viewer */
+    .viewer-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1rem 1.5rem;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+
+    /* Book */
+    .book-wrap { display: flex; justify-content: center; width: 100%; }
+
+    .book {
+      display: flex;
+      align-items: stretch;
+      box-shadow: var(--shadow);
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .b-side {
+      position: relative;
+      background: #fff;
+      overflow: hidden;
+    }
+    #pg-left  { border-radius: 4px 0 0 4px; border-right: 1px solid #d4d0c8; }
+    #pg-right { border-radius: 0 4px 4px 0; border-left:  1px solid #d4d0c8; }
+
+    .spine {
+      width: 9px;
+      flex-shrink: 0;
+      background: linear-gradient(to right, #bbb7b0, #e5e2dc, #bbb7b0);
+    }
+
+    .page-canvas { display: block; }
+
+    .shade {
+      position: absolute; top: 0; bottom: 0;
+      width: 28px; pointer-events: none;
+    }
+    .shade-l { right: 0; background: linear-gradient(to right, transparent, rgba(0,0,0,.055)); }
+    .shade-r { left:  0; background: linear-gradient(to left,  transparent, rgba(0,0,0,.055)); }
+
+    /* Thumbnails */
+    .thumbs {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      max-width: 680px;
+      width: 100%;
+      padding: 3px 0 8px;
+      scrollbar-width: thin;
+    }
+
+    .thumb {
+      flex-shrink: 0;
+      width: 50px;
+      cursor: pointer;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      opacity: .5;
+      transition: opacity .2s, border-color .2s;
+    }
+    .thumb:hover   { opacity: .78; }
+    .thumb.active  { border-color: var(--accent); opacity: 1; }
+    .thumb canvas  { width: 50px; height: auto; display: block; }
+    .thumb-num     { font-size: 9px; text-align: center; color: var(--muted); background: var(--surface2); padding: 2px 0; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .toolbar   { flex-wrap: wrap; }
+      .tc        { order: 3; width: 100%; justify-content: center; }
+      .fname     { display: none; }
+      .viewer-body { padding: 1rem .5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════ UPLOAD SCREEN ════════ -->
+<div id="upload-screen" class="screen active">
+  <div class="hero">
+    <div class="brand">📖 FlipBook</div>
+    <h1>Turn any PDF into a flipbook</h1>
+    <p>Upload your PDF and flip through it like a real book — no account, no uploads, completely private.</p>
+
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">📄</div>
+      <p class="drop-title">Drop your PDF here</p>
+      <p class="drop-sub">or click the button below</p>
+      <button class="btn" onclick="document.getElementById('file-input').click()">Choose PDF</button>
+      <input type="file" id="file-input" accept=".pdf" />
+    </div>
+
+    <div class="progress-wrap" id="prog-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+      <p class="progress-txt" id="prog-txt">Loading…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ VIEWER SCREEN ════════ -->
+<div id="viewer-screen" class="screen">
+
+  <header class="toolbar">
+    <div class="tl">
+      <span class="brand-sm">📖 FlipBook</span>
+      <span class="fname" id="fname"></span>
+    </div>
+    <div class="tc">
+      <button class="tbtn" id="btn-prev" onclick="goPage(-1)">&#8592; Prev</button>
+      <span class="pg-info" id="pg-info">Page 1 of 1</span>
+      <button class="tbtn" id="btn-next" onclick="goPage(1)">Next &#8594;</button>
+    </div>
+    <div class="tr">
+      <button class="tbtn" onclick="zoomOut()">&#8722;</button>
+      <button class="tbtn" onclick="zoomIn()">&#43;</button>
+      <button class="tbtn" onclick="resetApp()">&#x21BA; New PDF</button>
+    </div>
+  </header>
+
+  <main class="viewer-body">
+    <div class="book-wrap">
+      <div class="book" id="book">
+        <div class="b-side" id="pg-left">
+          <canvas class="page-canvas" id="c-left"></canvas>
+          <div class="shade shade-l"></div>
+        </div>
+        <div class="spine"></div>
+        <div class="b-side" id="pg-right">
+          <canvas class="page-canvas" id="c-right"></canvas>
+          <div class="shade shade-r"></div>
+        </div>
+      </div>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+  </main>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
