@@ -1,0 +1,248 @@
+/* ── Reset & Base ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f0ede8;
+  --surface:   #ffffff;
+  --surface-2: #f7f5f2;
+  --border:    #e0ddd8;
+  --text:      #1a1917;
+  --text-muted:#6b6865;
+  --accent:    #2563eb;
+  --accent-bg: #eff6ff;
+  --shadow-book: 0 20px 60px rgba(0,0,0,.22), 0 4px 16px rgba(0,0,0,.12);
+  --radius:    10px;
+  --font:      system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Screens ────────────────────────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── Upload Screen ──────────────────────────────────────────── */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  letter-spacing: -.02em;
+}
+
+.hero h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  margin-bottom: .6rem;
+}
+
+.hero > p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 380px;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.drop-zone {
+  width: 100%;
+  max-width: 480px;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.drop-icon { font-size: 3rem; margin-bottom: 1rem; }
+.drop-title { font-size: 1.1rem; font-weight: 600; margin-bottom: .3rem; }
+.drop-sub   { font-size: .9rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+#file-input { display: none; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: .65rem 1.5rem;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+
+/* ── Progress Bar ───────────────────────────────────────────── */
+.loading-wrap {
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+.loading-wrap.hidden { display: none; }
+
+.progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: .6rem;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width .3s ease;
+}
+.loading-text { font-size: .85rem; color: var(--text-muted); }
+
+/* ── Toolbar ────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.toolbar-left  { display: flex; align-items: center; gap: .75rem; flex: 1; }
+.toolbar-center{ display: flex; align-items: center; gap: .5rem; }
+.toolbar-right { display: flex; align-items: center; gap: .4rem; flex: 1; justify-content: flex-end; }
+
+.logo-sm   { font-size: 1.1rem; font-weight: 700; }
+.file-name { font-size: .8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.page-info { font-size: .85rem; color: var(--text-muted); min-width: 110px; text-align: center; }
+
+.tool-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .35rem .75rem;
+  font-size: .9rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .15s;
+}
+.tool-btn:hover { background: var(--surface-2); }
+.tool-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── Viewer Main ────────────────────────────────────────────── */
+.viewer-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem 1.5rem;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+/* ── Book ───────────────────────────────────────────────────── */
+.book-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.book {
+  display: flex;
+  align-items: stretch;
+  box-shadow: var(--shadow-book);
+  border-radius: 4px;
+  position: relative;
+  transition: transform .3s ease;
+}
+
+.book-side {
+  position: relative;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+#left-side  { border-radius: 4px 0 0 4px; border-right: 1px solid #d8d5d0; }
+#right-side { border-radius: 0 4px 4px 0; border-left:  1px solid #d8d5d0; }
+
+.book-spine {
+  width: 8px;
+  background: linear-gradient(to right, #c8c4be, #e8e5e0, #c8c4be);
+  flex-shrink: 0;
+}
+
+.page-canvas { display: block; }
+
+.page-shadow {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 24px;
+  pointer-events: none;
+}
+.left-shadow  { right: 0; background: linear-gradient(to right, transparent, rgba(0,0,0,.06)); }
+.right-shadow { left:  0; background: linear-gradient(to left,  transparent, rgba(0,0,0,.06)); }
+
+/* ── Thumbnails ─────────────────────────────────────────────── */
+.thumbs-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  max-width: 700px;
+  width: 100%;
+  padding: 4px 0 8px;
+  scrollbar-width: thin;
+}
+
+.thumb {
+  flex-shrink: 0;
+  width: 52px;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  opacity: .55;
+  transition: opacity .2s, border-color .2s;
+}
+.thumb:hover      { opacity: .8; }
+.thumb.active     { border-color: var(--accent); opacity: 1; }
+.thumb canvas     { width: 52px; height: auto; display: block; }
+.thumb .thumb-num {
+  font-size: 10px;
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2px 0;
+  background: var(--surface-2);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .toolbar { flex-wrap: wrap; }
+  .toolbar-center { order: 3; width: 100%; justify-content: center; }
+  .file-name { display: none; }
+  .viewer-main { padding: 1rem .5rem 1rem; }
+}
